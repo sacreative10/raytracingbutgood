@@ -2,6 +2,7 @@
 #include "lodepng.h"
 #include <cstdint>
 #include <iostream>
+#include "common.h"
 
 
 Framebuffer::Framebuffer(const size_t width, const size_t height) : m_height(height), m_width(width), m_bufferData((uint8_t*)malloc(width * height * bytesPerPixel * sizeof(uint8_t*))){}
@@ -12,12 +13,21 @@ Framebuffer::~Framebuffer()
     free(m_bufferData);
 }
 
-void Framebuffer::setPixel ( const size_t x, const size_t y, const uint8_t r, const uint8_t g, const uint8_t b )
+void Framebuffer::setPixel ( const size_t x, size_t y, float r, float g, float b, int samplesPerPixel)
 {
+    float scale = 1.0f / samplesPerPixel;
+    r = sqrt(scale * r);
+    g = sqrt(scale * g);
+    b = sqrt(scale * b);
+
+
+    uint8_t ir = 256 * clamp(r, 0.0, 0.999);
+    uint8_t ig = 256 * clamp(g, 0.0, 0.999);
+    uint8_t ib = 256 * clamp(b, 0.0, 0.999);
     const size_t index = (x + y * m_width) * bytesPerPixel;
-    m_bufferData[index] = r;
-    m_bufferData[index + 1] = g;
-    m_bufferData[index + 2] = b;
+    m_bufferData[index] = ir;
+    m_bufferData[index + 1] = ig;
+    m_bufferData[index + 2] = ib;
 }
 
 void Framebuffer::getPixel ( const size_t x, const size_t y, uint8_t& r, uint8_t& g, uint8_t& b )

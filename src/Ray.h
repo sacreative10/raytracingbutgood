@@ -2,6 +2,7 @@
 
 
 #include <glm/glm.hpp>
+#include "common.h"
 using point3 = glm::vec3;
 using color = glm::vec3;
 class Ray
@@ -39,4 +40,23 @@ inline float hitSphere(const point3& center, float radius, const Ray& r) {
         return (-half_b - sqrt(discriminant))/a;
     }
 
+}
+
+inline glm::vec3 randomVector()
+{
+    return glm::vec3{random_float(), random_float(), random_float()};
+}
+inline glm::vec3 randomVector(float min, float max)
+{
+    return glm::vec3{random_float(min, max), random_float(min, max), random_float(min, max)};
+}
+
+inline glm::vec3 random_in_unit_sphere()
+{
+    while(true)
+    {
+        auto p = randomVector(-1, 1);
+        if(squareVector(p) >= 1) continue;
+        return p;
+    }
 }

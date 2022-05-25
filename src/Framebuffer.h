@@ -17,7 +17,7 @@ public:
     Framebuffer(const size_t width, const size_t height);
     ~Framebuffer();
 
-    void setPixel(const size_t x, const size_t y, const uint8_t r, const uint8_t g, const uint8_t b);
+    void setPixel(const size_t x, const size_t y, float r, float g, float b, int samplesPerPixel);
     void getPixel(const size_t x, const size_t y, uint8_t& r, uint8_t& g, uint8_t& b);
 
     void saveBuffer(const char* fileName);
