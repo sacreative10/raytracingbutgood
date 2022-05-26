@@ -54,4 +54,5 @@ inline float clamp(float x, float min, float max)
 #include "Ray.h"
 #include <glm/glm.hpp>
 
+
 #endif

@@ -6,7 +6,7 @@
 
 
 
-Sphere::Sphere ( point3 cen, float r ) : m_center(cen), m_radius(r){}
+Sphere::Sphere ( point3 cen, float r, shared_ptr<material> mat ) : m_center(cen), m_radius(r), m_mat(mat){}
 
 
 
@@ -36,6 +36,7 @@ bool Sphere::hit ( const Ray& r, float t_min, float t_max, hitrecord& rec ) cons
     rec.p = r.at(rec.t);
     glm::vec3 outward_normal = (rec.p - m_center) / m_radius;
     rec.set_face_normal(r, outward_normal);
+    rec.mat_ptr = m_mat;
 
 
 

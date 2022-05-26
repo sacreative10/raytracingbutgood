@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <iostream>
 #include "common.h"
+#include <cmath>
 
 
 Framebuffer::Framebuffer(const size_t width, const size_t height) : m_height(height), m_width(width), m_bufferData((uint8_t*)malloc(width * height * bytesPerPixel * sizeof(uint8_t*))){}
@@ -15,10 +16,12 @@ Framebuffer::~Framebuffer()
 
 void Framebuffer::setPixel ( const size_t x, size_t y, float r, float g, float b, int samplesPerPixel)
 {
-    float scale = 1.0f / samplesPerPixel;
-    r = sqrt(scale * r);
-    g = sqrt(scale * g);
-    b = sqrt(scale * b);
+    // use gamma correction using gamma=2.0f
+    auto scale = 1.0f/ samplesPerPixel;
+    r = sqrtf(scale * r);
+    g = sqrtf(scale * g);
+    b = sqrtf(scale * b);
+    
 
 
     uint8_t ir = 256 * clamp(r, 0.0, 0.999);

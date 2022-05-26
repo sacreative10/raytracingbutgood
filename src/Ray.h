@@ -60,3 +60,20 @@ inline glm::vec3 random_in_unit_sphere()
         return p;
     }
 }
+
+inline bool near_zero(glm::vec3 v)
+{
+    const auto s = 1e-8;
+    return (fabs(v.x) < s) && (fabs(v.y) < s) && (fabs(v.z) < s);
+}
+
+inline glm::vec3 reflect(const glm::vec3& v, const glm::vec3& n)
+{
+    return v - 2*dot(v, n)*n;
+}
+
+inline glm::vec3 random_unit_vector()
+{
+    // returns a unit vector pointing in a random direction
+    return glm::normalize(randomVector());
+}

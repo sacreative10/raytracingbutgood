@@ -14,13 +14,14 @@ class Sphere : public Hittable
 {
 public:
     Sphere() {}
-    Sphere(point3 cen, float r);
+    Sphere(point3 cen, float r, shared_ptr<material> mat);
 
     virtual bool hit ( const Ray & r, float t_min, float t_max, hitrecord & rec ) const override;
 
 public:
     point3 m_center;
     float m_radius;
+    shared_ptr<material> m_mat;
 
 };
 

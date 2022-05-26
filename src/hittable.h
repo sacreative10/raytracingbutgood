@@ -5,15 +5,19 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
+#include "common.h"
+
 #include "Ray.h"
 /**
  * @todo write docs
  */
+class material;
 
 struct hitrecord {
     point3 p;
     glm::vec3 normal;
     float t;
+    shared_ptr<material> mat_ptr;
     bool front_face;
 
     inline void set_face_normal(const Ray& r, const glm::vec3& outward_normal)

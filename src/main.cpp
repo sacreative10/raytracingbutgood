@@ -8,6 +8,8 @@
 
 #include <iostream>
 
+#include "material.h"
+
 using point3 = glm::vec3;
 using color = glm::vec3;
 
@@ -19,10 +21,18 @@ color ray_colour(const Ray& ray, const Hittable& world, int depth)
     {
         return color(0, 0, 0);
     }
-    if(world.hit(ray, 0, infinity, rec))
+    if(world.hit(ray, 0.001, infinity, rec))
     {
-        point3 target = rec.p + rec.normal + random_in_unit_sphere();
-        return 0.5f * ray_colour(Ray(rec.p, target - rec.p), world, depth - 1);
+        Ray scattered;
+        color attenuation;  
+        if(rec.mat_ptr->scatter(ray, rec, attenuation, scattered))
+        {
+            return attenuation * ray_colour(scattered, world, depth-1);
+        }
+        else
+        {
+            return color(0, 0, 0);
+        }
     }
     glm::vec3 unit_direction = glm::normalize(ray.direction());
     auto t = 0.5f*(unit_direction.y + 1.0f);
@@ -40,13 +50,23 @@ int main() {
     float viewport_height = 2.0f;
     float viewport_width = aspect_ratio * viewport_height;
     float focal_length = 1.0f;
-    const int samples_per_pixel = 10;
-    const int max_depth = 25;
+    const int samples_per_pixel = 100;
+    const int max_depth = 50;
 
     // world
     hittable_list world;
-    world.add(make_shared<Sphere>(point3(0, 0, -1), 0.5));
-    world.add(make_shared<Sphere>(point3(0, -100.5, -1), 100));
+
+    auto material_ground = make_shared<Lambertian>(color(0.9f, 0.9f, 0.256f));
+    auto material_center = make_shared<Lambertian>(color(0.9f, 0.3f, 0.9f));
+    auto material_left = make_shared<Metal>(color(0.8f, 0.8f, 0.8f));
+    auto material_right = make_shared<Metal>(color(0.8f, 0.6f, 0.2f));
+
+    world.add(make_shared<Sphere>(point3(0.0f, -100.5f, -1.0f), 100.0f, material_ground));
+    world.add(make_shared<Sphere>(point3(0.0f, 0.0f, -1.0f), 0.5f, material_center));
+    world.add(make_shared<Sphere>(point3(-1.0f, 0.0f, -1.0f), 0.5f, material_left));
+    world.add(make_shared<Sphere>(point3(1.0f, 0.0f, -1.0f), 0.5f, material_right));
+
+
 
     camera cam(viewport_width, viewport_height);
 
