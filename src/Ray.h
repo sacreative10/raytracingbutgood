@@ -69,11 +69,27 @@ inline bool near_zero(glm::vec3 v)
 
 inline glm::vec3 reflect(const glm::vec3& v, const glm::vec3& n)
 {
-    return v - 2*dot(v, n)*n;
+    return v - 2*glm::dot(v, n)*n;
 }
 
 inline glm::vec3 random_unit_vector()
 {
     // returns a unit vector pointing in a random direction
     return glm::normalize(randomVector());
+}
+inline glm::vec3 refract(const glm::vec3& v, const glm::vec3& n, float ni_over_nt)
+{
+    float cos_theta = fmin(glm::dot(-v, n), 1.0f);
+    glm::vec3 r_out_perp = ni_over_nt*(v + cos_theta*n);
+    glm::vec3 r_out_parallel = -sqrt(1.0f - squareVector(r_out_perp))*n;
+    return r_out_perp + r_out_parallel;
+}
+inline glm::vec3 random_vector_in_unit_disk()
+{
+    while(true)
+    {
+        auto p = glm::vec3(random_float(-1, 1), random_float(-1, 1), 0);
+        if(squareVector(p) >= 1) continue;
+        return p;
+    }
 }
