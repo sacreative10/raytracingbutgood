@@ -2,11 +2,13 @@
 
 #include "hittable_list.h"
 #include "sphere.h"
+#include "triange.h"
 
 #include "camera.h"
 #include "Framebuffer.h"
 
 #include <iostream>
+
 
 #include "material.h"
 
@@ -63,15 +65,18 @@ hittable_list random_scene() {
 
 color ray_colour(const Ray& ray, const Hittable& world, int depth)
 {
-    hitrecord rec;
+    hitrecord rec = {};
     if(depth <= 0)
     {
         return color(0, 0, 0);
     }
     if(world.hit(ray, 0.001, infinity, rec))
     {
+
         Ray scattered;
         color attenuation;  
+        if (rec.mat_ptr)
+        {
         if(rec.mat_ptr->scatter(ray, rec, attenuation, scattered))
         {
             return attenuation * ray_colour(scattered, world, depth-1);
@@ -79,6 +84,7 @@ color ray_colour(const Ray& ray, const Hittable& world, int depth)
         else
         {
             return color(0, 0, 0);
+        }
         }
     }
     glm::vec3 unit_direction = glm::normalize(ray.direction());
@@ -101,7 +107,14 @@ int main() {
     const int max_depth = 50;
 
     // world
-    auto world = random_scene();
+    hittable_list world;
+
+    // auto ground_material = make_shared<Lambertian>(color(0.5, 0.5, 0.5));
+    // world.add(make_shared<Sphere>(point3(0,-1000,0), 1000, ground_material));
+
+
+    world.add(make_shared<Triangle>(point3(0, 0, 0), point3(1, 0, 0), point3(0, 1, 0), make_shared<Lambertian>(color(1.0, 0.0, 0.0))));
+
 
 
 
