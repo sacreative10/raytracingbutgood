@@ -4,6 +4,11 @@
 
 #include "aabb.h"
 
+const aabb aabb::empty =
+    aabb(interval::empty, interval::empty, interval::empty);
+const aabb aabb::universe =
+    aabb(interval::universe, interval::universe, interval::universe);
+
 bool aabb::hit(const Ray &r, interval ray_t) const {
   const point3 &origin = r.origin();
   const Vec3 &direction = r.direction();

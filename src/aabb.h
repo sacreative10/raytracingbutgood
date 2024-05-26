@@ -34,10 +34,17 @@ public:
       return y;
     return z;
   }
+
+  int longest_axis() const {
+    if (x.size() > y.size())
+      return x.size() > z.size() ? 0 : 2;
+    return y.size() > z.size() ? 1 : 2;
+  }
   bool hit(const Ray &r, interval ray_t) const;
 
 public:
   aabb() {}
+  static const aabb empty, universe;
 };
 
 #endif // RAYTRACINGBUTGOOD_AABB_H
