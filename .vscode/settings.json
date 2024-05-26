@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "vec2": "cpp",
+        "boundingbox": "cpp",
+        "plane": "cpp"
+    }
+}
