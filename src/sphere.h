@@ -6,7 +6,9 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
+#include "common.h"
 #include "hittable.h"
+#include <cmath>
 
 /**
  * @todo write docs
@@ -20,6 +22,13 @@ public:
                    hitrecord &rec) const override;
 
   aabb bounding_box() const override { return bbox; }
+
+  static point2 get_sphere_uv(const point3 &p) {
+    auto theta = acos(-p.y);
+    auto phi = atan2(-p.z, p.x) + pi;
+
+    return {phi / (2 * pi), theta / pi};
+  }
 
 public:
   point3 m_center;

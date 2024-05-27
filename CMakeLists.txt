@@ -19,7 +19,6 @@ add_executable(raytracingbutgood
         src/hittable_list.cpp
         src/lodepng.cpp
         src/main.cpp
-        #src/mesh.cpp
         src/meshLoader.h
         src/sphere.cpp
         src/triangle.h
@@ -29,7 +28,6 @@ add_executable(raytracingbutgood
         src/hittable_list.h
         src/lodepng.h
         src/material.h
-        #src/mesh.h
         src/Ray.h
         src/sphere.h
         src/meshLoader.h
@@ -41,7 +39,11 @@ add_executable(raytracingbutgood
         src/interval.cpp
         src/texture.h
         src/texture.cpp
+        src/image_texture.h
+        src/perlin.cpp
+        src/perlin.h
 )
 target_link_libraries(raytracingbutgood glm assimp tbb)
+target_include_directories(raytracingbutgood PRIVATE external/stb_image)
 
 install(TARGETS raytracingbutgood RUNTIME DESTINATION bin)

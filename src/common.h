@@ -41,11 +41,28 @@ inline float random_float(float min, float max) {
   return distribuiton(generator);
 }
 
+inline Vec3 randomVector() {
+  return Vec3(random_float(), random_float(), random_float());
+}
+
+inline Vec3 randomVector(float min, float max) {
+  return Vec3(random_float(min, max), random_float(min, max),
+              random_float(min, max));
+}
+
 inline int random_int(int min, int max) {
   return int(random_float(min, max + 1));
 }
 
 inline float clamp(float x, float min, float max) {
+  if (x < min)
+    return min;
+  if (x > max)
+    return max;
+  return x;
+}
+
+inline int clamp(int x, int min, int max) {
   if (x < min)
     return min;
   if (x > max)

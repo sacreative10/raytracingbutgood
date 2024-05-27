@@ -37,6 +37,7 @@ bool Sphere::hit(const Ray &r, float t_min, float t_max, hitrecord &rec) const {
   rec.p = r.at(rec.t);
   glm::vec3 outward_normal = (rec.p - m_center) / m_radius;
   rec.set_face_normal(r, outward_normal);
+  rec.uv = get_sphere_uv(outward_normal);
   rec.mat_ptr = m_mat;
 
   return true;
