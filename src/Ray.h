@@ -25,28 +25,6 @@ inline float squareVector(const glm::vec3 &v) {
   return v.x * v.x + v.y * v.y + v.z * v.z;
 }
 
-inline float hitSphere(const point3 &center, float radius, const Ray &r) {
-  point3 oc = r.origin() - center;
-  float a = squareVector(r.direction());
-  float half_b = dot(oc, r.direction());
-  float c = squareVector(oc) - radius * radius;
-  auto discriminant = half_b * half_b - a * c;
-  if (discriminant < 0) {
-    return -1.0f;
-  } else {
-    return (-half_b - sqrt(discriminant)) / a;
-  }
-}
-
-inline glm::vec3 random_in_unit_sphere() {
-  while (true) {
-    auto p = randomVector(-1, 1);
-    if (squareVector(p) >= 1)
-      continue;
-    return p;
-  }
-}
-
 inline bool near_zero(glm::vec3 v) {
   const auto s = 1e-8;
   return (fabs(v.x) < s) && (fabs(v.y) < s) && (fabs(v.z) < s);
@@ -56,9 +34,17 @@ inline glm::vec3 reflect(const glm::vec3 &v, const glm::vec3 &n) {
   return v - 2 * glm::dot(v, n) * n;
 }
 
+inline glm::vec3 random_in_unit_sphere() {
+  while (true) {
+    auto p = randomVector(-1, 1);
+    if (squareVector(p) <= 1)
+      return p;
+  }
+}
+
 inline glm::vec3 random_unit_vector() {
   // returns a unit vector pointing in a random direction
-  return glm::normalize(randomVector());
+  return glm::normalize(random_in_unit_sphere());
 }
 inline glm::vec3 refract(const glm::vec3 &v, const glm::vec3 &n,
                          float ni_over_nt) {

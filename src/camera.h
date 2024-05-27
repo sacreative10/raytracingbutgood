@@ -8,6 +8,14 @@
 #include <cmath>
 #include <execution>
 #include <iostream>
+#include <thread>
+
+void printProgress(std::atomic<int> &counter, int total) {
+  while (counter < total) {
+    std::cerr << "\rProgress: " << counter << "/" << total << ' ' << std::flush;
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+  }
+}
 
 class camera {
 public:
@@ -27,6 +35,9 @@ public:
     auto start = std::chrono::high_resolution_clock::now();
 
 #if MT
+    // start a new thread, which will every 5 ticks, print the progress
+    std::atomic<int> counter = 0;
+    std::thread t(printProgress, std::ref(counter), image_width * image_height);
     std::for_each(std::execution::par, verticalIterator.begin(),
                   verticalIterator.end(), [&](uint32_t y) {
                     std::for_each(
@@ -40,8 +51,13 @@ public:
                           }
                           fb.setPixel(x, y, pixel_color.r, pixel_color.g,
                                       pixel_color.b, samples_per_pixel);
+
+                          // increment the counter
+                          counter++;
                         });
                   });
+    // wait for the thread to finish
+    t.join();
 
 #elif MT_LINES
 
@@ -71,8 +87,8 @@ public:
           Ray r = sendRay(x, y);
           pixel_color += ray_colour(r, world, max_depth);
         }
-        fb.setPixel(x, height - y, pixel_color.r, pixel_color.g, pixel_color.b,
-                    samples_per_pixel);
+        fb.setPixel(x, image_height - y, pixel_color.r, pixel_color.g,
+                    pixel_color.b, samples_per_pixel);
       }
     }
 #endif
@@ -89,6 +105,8 @@ public:
   int samples_per_pixel = 10;
   int max_depth = 10;
 
+  color background;
+
   // TODO: Use matrices instead
 
   float fov = 90;
@@ -101,7 +119,7 @@ public:
 
 private:
   void initCamera() {
-    image_height = int(image_height / aspectratio);
+    image_height = int(image_width / aspectratio);
     image_height = (image_height < 1) ? 1 : image_height;
 
     pixel_samples_scale = 1.0 / samples_per_pixel;
@@ -158,25 +176,26 @@ private:
     return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
   }
   color ray_colour(const Ray &ray, const Hittable &world, int depth) {
-    hitrecord rec = {};
-    if (depth <= 0) {
+    if (depth <= 0)
       return color(0, 0, 0);
-    }
-    if (world.hit(ray, 0.001, infinity, rec)) {
 
-      Ray scattered;
-      color attenuation;
-      if (rec.mat_ptr) {
-        if (rec.mat_ptr->scatter(ray, rec, attenuation, scattered)) {
-          return attenuation * ray_colour(scattered, world, depth - 1);
-        } else {
-          return color(0, 0, 0);
-        }
-      }
-    }
-    glm::vec3 unit_direction = glm::normalize(ray.direction());
-    auto t = 0.5f * (unit_direction.y + 1.0f);
-    return (1.0f - t) * color(1.0f, 1.0f, 1.0f) + t * color(0.5, 0.7, 1.0);
+    hitrecord rec = {};
+
+    if (!world.hit(ray, 0.001, infinity, rec))
+      return background;
+
+    if (rec.mat_ptr == nullptr)
+      return color(0, 0, 0);
+
+    Ray scattered;
+    color attenuation;
+    color emitted = rec.mat_ptr->emitted(rec.uv, rec.p);
+    if (!rec.mat_ptr->scatter(ray, rec, attenuation, scattered))
+      return emitted;
+
+    color from_scatter = attenuation * ray_colour(scattered, world, depth - 1);
+
+    return from_scatter + emitted;
   }
 
   float m_aspect_height;

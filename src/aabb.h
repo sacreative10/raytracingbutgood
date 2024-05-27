@@ -13,7 +13,9 @@ public:
   interval x, y, z;
 
   aabb(const interval &x, const interval &y, const interval &z)
-      : x(x), y(y), z(z) {}
+      : x(x), y(y), z(z) {
+    pad_to_minimums();
+  }
 
   aabb(const Point3 &a, const Point3 &b) {
     x = a[0] < b[0] ? interval(a[0], b[0]) : interval(b[0], a[0]);
@@ -45,6 +47,18 @@ public:
 public:
   aabb() {}
   static const aabb empty, universe;
+
+private:
+  // to avoid division by zero
+  void pad_to_minimums() {
+    float delta = 0.0001;
+    if (x.size() < delta)
+      x.expands(delta);
+    if (y.size() < delta)
+      y.expands(delta);
+    if (z.size() < delta)
+      z.expands(delta);
+  }
 };
 
 #endif // RAYTRACINGBUTGOOD_AABB_H

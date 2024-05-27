@@ -42,6 +42,9 @@ add_executable(raytracingbutgood
         src/image_texture.h
         src/perlin.cpp
         src/perlin.h
+        src/quadilateral.cpp
+        src/quadilateral.h
+        src/lights.h
 )
 target_link_libraries(raytracingbutgood glm assimp tbb)
 target_include_directories(raytracingbutgood PRIVATE external/stb_image)

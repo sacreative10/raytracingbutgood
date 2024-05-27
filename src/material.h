@@ -9,8 +9,16 @@ struct hitrecord;
 
 class material {
 public:
+  virtual ~material() = default;
+
+  virtual color emitted(const point2 &uv, const point3 &p) const {
+    return color(0, 0, 0);
+  }
+
   virtual bool scatter(const Ray &r_in, const hitrecord &rec,
-                       color &attenuation, Ray &scattered) const = 0;
+                       color &attenuation, Ray &scattered) const {
+    return false;
+  }
 };
 
 class Lambertian : public material {

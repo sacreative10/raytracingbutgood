@@ -30,15 +30,13 @@ inline float deg_to_reg(float deg) { return deg * pi / 180; }
 #include <random>
 
 inline float random_float() {
-  static std::uniform_real_distribution<float> distribuiton(0.0f, 1.0f);
+  static std::uniform_real_distribution<float> distribution(0.0, 1.0);
   static std::mt19937 generator;
-  return distribuiton(generator);
+  return distribution(generator);
 }
 
 inline float random_float(float min, float max) {
-  static std::uniform_real_distribution<float> distribuiton(min, max);
-  static std::mt19937 generator;
-  return distribuiton(generator);
+  return min + (max - min) * random_float();
 }
 
 inline Vec3 randomVector() {
