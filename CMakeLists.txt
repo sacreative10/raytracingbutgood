@@ -8,6 +8,10 @@ add_subdirectory(external/glm)
 add_subdirectory(external/assimp)
 add_compile_definitions(MT)
 find_package(TBB REQUIRED COMPONENTS tbb)
+
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_executable(raytracingbutgood
         src/camera.h
         src/Framebuffer.cpp
@@ -35,6 +39,8 @@ add_executable(raytracingbutgood
         src/bvh_node.cpp
         src/bvh_node.h
         src/interval.cpp
+        src/texture.h
+        src/texture.cpp
 )
 target_link_libraries(raytracingbutgood glm assimp tbb)
 

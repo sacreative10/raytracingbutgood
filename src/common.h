@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <cmath>
+#include <glm/glm.hpp>
 #include <limits>
 #include <memory>
 
@@ -9,6 +10,11 @@
 using std::make_shared;
 using std::shared_ptr;
 using std::sqrt;
+
+using Vec3 = glm::vec3;
+using point3 = glm::vec3;
+using color = glm::vec3;
+using point2 = glm::vec2;
 
 // some constants
 
