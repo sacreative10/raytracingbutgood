@@ -37,3 +37,6 @@ bool aabb::hit(const Ray &r, interval ray_t) const {
   }
   return true;
 }
+aabb operator+(const aabb &bbox, const Vec3 &offset) {
+  return aabb(bbox.x + offset.x, bbox.y + offset.y, bbox.z + offset.z);
+}

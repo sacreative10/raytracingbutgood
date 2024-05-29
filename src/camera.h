@@ -12,6 +12,7 @@
 
 void printProgress(std::atomic<int> &counter, int total) {
   while (counter < total) {
+    // estimate the progress by the counter
     std::cerr << "\rProgress: " << counter << "/" << total << ' ' << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(5));
   }

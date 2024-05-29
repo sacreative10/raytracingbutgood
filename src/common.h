@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <cmath>
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <limits>
 #include <memory>

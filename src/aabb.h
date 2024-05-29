@@ -61,4 +61,6 @@ private:
   }
 };
 
+aabb operator+(const aabb &bbox, const Vec3 &offset);
+
 #endif // RAYTRACINGBUTGOOD_AABB_H

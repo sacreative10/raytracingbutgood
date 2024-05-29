@@ -21,7 +21,7 @@ add_executable(raytracingbutgood
         src/main.cpp
         src/meshLoader.h
         src/sphere.cpp
-        src/triangle.h
+        #    src/triangle.h
         src/common.h
         src/Framebuffer.h
         src/hittable.h
@@ -45,8 +45,15 @@ add_executable(raytracingbutgood
         src/quadilateral.cpp
         src/quadilateral.h
         src/lights.h
+        src/mesh.h
+        src/mesh.cpp
+        external/tinyobjloader/tiny_obj_loader.h
+        external/tinyobjloader/tiny_obj_loader.cc
+        src/objLoader.h
+        src/data.h
 )
 target_link_libraries(raytracingbutgood glm assimp tbb)
 target_include_directories(raytracingbutgood PRIVATE external/stb_image)
+target_include_directories(raytracingbutgood PRIVATE external/tinyobjloader)
 
 install(TARGETS raytracingbutgood RUNTIME DESTINATION bin)

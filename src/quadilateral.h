@@ -8,7 +8,7 @@
 #include "hittable.h"
 #include "hittable_list.h"
 class quadilateral : public Hittable {
-
+public:
   virtual void set_bounding_box() {
     auto bbox_diag1 = aabb(Q, Q + u + v);
     auto bbox_diag2 = aabb(Q + u, Q + v);
@@ -23,10 +23,16 @@ class quadilateral : public Hittable {
   bool hit(const Ray &r, float t_min, float t_max,
            hitrecord &rec) const override;
 
+  Vec3 normal;
+
 public:
-  quadilateral(const point3 &Q, const Vec3 &u, const Vec3 &v,
-               shared_ptr<material> mat)
-      : Q(Q), u(u), v(v), mat_ptr(mat) {
+  quadilateral(const Transform &objectToWorld, const point3 &Q_, const Vec3 &u_,
+               const Vec3 &v_, shared_ptr<material> mat)
+      : mat_ptr(mat) {
+
+    Q = (objectToWorld * glm::vec4(Q_, 1)).xyz();
+    u = (objectToWorld * glm::vec4(u_, 0)).xyz();
+    v = (objectToWorld * glm::vec4(v_, 0)).xyz();
     auto n = glm::cross(u, v);
     normal = glm::normalize(n);
     D = glm::dot(normal, Q);
@@ -41,11 +47,11 @@ private:
   Vec3 w;
   std::shared_ptr<material> mat_ptr;
   aabb bbox;
-  Vec3 normal;
   float D; // some constant for the general plane equation
 };
 
-shared_ptr<hittable_list> box(const point3 &corner1, const point3 &corner2,
+shared_ptr<hittable_list> box(const Transform &objectToWorld,
+                              const point3 &corner1, const point3 &corner2,
                               const shared_ptr<material> &mat);
 
 #endif // RAYTRACINGBUTGOOD_QUADILATERAL_H

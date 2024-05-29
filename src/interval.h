@@ -29,4 +29,6 @@ public:
   static const interval empty, universe;
 };
 
+interval operator+(const interval &ival, float displacement);
+
 #endif // RAYTRACINGBUTGOOD_INTERVAL_H

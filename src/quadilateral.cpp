@@ -45,29 +45,32 @@ bool quadilateral::is_interior(float a, float b, hitrecord &rec) const {
   rec.uv = Vec2(a, b);
   return true;
 }
-shared_ptr<hittable_list> box(const point3 &corner1, const point3 &corner2,
+shared_ptr<hittable_list> box(const Transform &objectToWorld,
+                              const point3 &corner1, const point3 &corner2,
                               const shared_ptr<material> &mat) {
   auto sides = make_shared<hittable_list>();
 
-  auto min = glm::min(corner1, corner2);
-  auto max = glm::max(corner1, corner2);
+  auto min = Vec3(fmin(corner1.x, corner2.x), fmin(corner1.y, corner2.y),
+                  fmin(corner1.z, corner2.z));
+  auto max = Vec3(fmax(corner1.x, corner2.x), fmax(corner1.y, corner2.y),
+                  fmax(corner1.z, corner2.z));
 
   auto dx = Vec3(max.x - min.x, 0, 0);
   auto dy = Vec3(0, max.y - min.y, 0);
   auto dz = Vec3(0, 0, max.z - min.z);
 
-  sides->add(
-      make_shared<quadilateral>(point3(min.x, min.y, max.z), dx, dy, mat));
-  sides->add(
-      make_shared<quadilateral>(point3(max.x, min.y, max.z), -dz, dy, mat));
-  sides->add(
-      make_shared<quadilateral>(point3(max.x, min.y, min.z), -dx, dy, mat));
-  sides->add(
-      make_shared<quadilateral>(point3(min.x, min.y, min.z), dz, dy, mat));
-  sides->add(
-      make_shared<quadilateral>(point3(min.x, max.y, max.z), dx, -dz, mat));
-  sides->add(
-      make_shared<quadilateral>(point3(min.x, max.y, max.z), dx, dz, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(min.x, min.y, max.z), dx, dy, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(max.x, min.y, max.z), -dz, dy, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(max.x, min.y, min.z), -dx, dy, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(min.x, min.y, min.z), dz, dy, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(min.x, max.y, max.z), dx, -dz, mat));
+  sides->add(make_shared<quadilateral>(
+      objectToWorld, point3(min.x, min.y, min.z), dx, dz, mat));
 
   return sides;
 }
