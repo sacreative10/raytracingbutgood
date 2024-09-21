@@ -28,34 +28,43 @@
 using point3 = glm::vec3;
 using color = glm::vec3;
 
-void firstBook() {
+void firstBook()
+{
   hittable_list world;
 
   auto checker =
-      make_shared<checkered>(0.32, color(.2, .3, .1), color(.9, .9, .9));
+    make_shared<checkered>(0.32, color(.2, .3, .1), color(.9, .9, .9));
   world.add(make_shared<Sphere>(point3(0, -1000, 0), 1000,
                                 make_shared<Lambertian>(checker)));
 
-  for (int a = -11; a < 11; a++) {
-    for (int b = -11; b < 11; b++) {
+  for (int a = -11; a < 11; a++)
+  {
+    for (int b = -11; b < 11; b++)
+    {
       auto choose_mat = random_float();
       point3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
 
-      if ((center - point3(4, 0.2, 0)).length() > 0.9) {
+      if ((center - point3(4, 0.2, 0)).length() > 0.9)
+      {
         shared_ptr<material> sphere_material;
 
-        if (choose_mat < 0.8) {
+        if (choose_mat < 0.8)
+        {
           // diffuse
           auto albedo = randomVector() * randomVector();
           sphere_material = make_shared<Lambertian>(albedo);
           world.add(make_shared<Sphere>(center, 0.2, sphere_material));
-        } else if (choose_mat < 0.95) {
+        }
+        else if (choose_mat < 0.95)
+        {
           // metal
           auto albedo = randomVector(0.5f, 1.0f);
           auto fuzz = random_float(0, 0.5);
           sphere_material = make_shared<Metal>(albedo, fuzz);
           world.add(make_shared<Sphere>(center, 0.2, sphere_material));
-        } else {
+        }
+        else
+        {
           // glass
           sphere_material = make_shared<dielectric>(1.5);
           world.add(make_shared<Sphere>(center, 0.2, sphere_material));
@@ -93,11 +102,13 @@ void firstBook() {
 
   cam.render(world);
 }
-void checkered_spheres() {
+
+void checkered_spheres()
+{
   hittable_list world;
 
   auto checker =
-      make_shared<checkered>(0.32, color(.2, .3, .1), color(.9, .9, .9));
+    make_shared<checkered>(0.32, color(.2, .3, .1), color(.9, .9, .9));
 
   world.add(make_shared<Sphere>(point3(0, -10, 0), 10,
                                 make_shared<Lambertian>(checker)));
@@ -122,7 +133,8 @@ void checkered_spheres() {
   cam.render(world);
 }
 
-void earth() {
+void earth()
+{
   auto earth_texture = make_shared<image_texture>("../earthmap.jpg");
   auto earth_surface = make_shared<Lambertian>(earth_texture);
 
@@ -146,7 +158,8 @@ void earth() {
   cam.render(hittable_list(globe));
 }
 
-void perlin_spheres() {
+void perlin_spheres()
+{
   hittable_list world;
 
   auto perlin_tex = make_shared<perlin_noise_texture>(4);
@@ -173,122 +186,20 @@ void perlin_spheres() {
   cam.render(world);
 }
 
-void quads() {
-  hittable_list world;
-
-  auto left_red = make_shared<Lambertian>(color(0.8, 0.1, 0.1));
-  auto back_green = make_shared<Lambertian>(color(0.1, 0.8, 0.1));
-  auto right_blue = make_shared<Lambertian>(color(0.1, 0.1, 0.8));
-  auto upper_orange = make_shared<Lambertian>(color(0.8, 0.8, 0.1));
-  auto lower_cyan = make_shared<Lambertian>(color(0.1, 0.8, 0.8));
-  //
-  //  std::vector<point3> cubeVertices = {
-  //      {-1.f, -1.f, 1.f}, {1.f, -1.f, 1.f},   {1.f, 1.f, 1.f},
-  //      {-1.f, 1.f, 1.f},  {-1.f, -1.f, -1.f}, {1.f, -1.f, -1.f},
-  //      {1.f, 1.f, -1.f},  {-1.f, 1.f, -1.f},
-  //  };
-  //
-  //  std::vector<int> index = {
-  //      // front
-  //      0,
-  //      1,
-  //      2,
-  //      2,
-  //      3,
-  //      0,
-  //      // right
-  //      1,
-  //      5,
-  //      6,
-  //      6,
-  //      2,
-  //      1,
-  //      // back
-  //      7,
-  //      6,
-  //      5,
-  //      5,
-  //      4,
-  //      7,
-  //      // left
-  //      4,
-  //      0,
-  //      3,
-  //      3,
-  //      7,
-  //      4,
-  //      // bottom
-  //      4,
-  //      5,
-  //      1,
-  //      1,
-  //      0,
-  //      4,
-  //      // top
-  //      3,
-  //      2,
-  //      6,
-  //      6,
-  //      7,
-  //      3,
-  //  };
-  //
-  Transform meshRot =
-      glm::rotate(glm::mat4(1), glm::radians(15.f), glm::vec3(0, 1, 0));
-  Transform meshTrans = glm::translate(glm::mat4(1), glm::vec3(0, 0, 0));
-  Transform meshScale = glm::scale(glm::mat4(1), glm::vec3(0.5, 0.5, 0.5));
-  //
-  //  auto earthMapTex = make_shared<image_texture>("../earthmap.jpg");
-  //  auto mat = make_shared<Lambertian>(earthMapTex);
-  //
-  //  Mesh cube(cubeVertices, {}, {}, index, mat, meshTrans * meshRot);
-  //
-  //  world.add(make_shared<Mesh>(cube));
-
-  Mesh mesh = Mesh("../lamp.obj", make_shared<Lambertian>(color(1, 0.2, 0)),
-                   meshTrans * meshRot);
-
-  world.add(make_shared<Mesh>(mesh));
-
-  //  auto checker =
-  //      make_shared<checkered>(0.32, color(.2, .3, .1), color(.9, .9, .9));
-  //  world.add(make_shared<Sphere>(point3(0, -1000, 0), 1000,
-  //                                make_shared<Lambertian>(checker)));
-
-  // bvh
-  // world = hittable_list(make_shared<bvh_node>(world));
-
-  camera cam;
-
-  cam.aspectratio = 1.0f;
-  cam.image_width = 600;
-  cam.samples_per_pixel = 100;
-  cam.max_depth = 50;
-
-  cam.fov = 80;
-  cam.lookfrom = point3(30, 0, 9);
-  cam.lookat = point3(0, 0, 0);
-  cam.vup = Vec3(0, 1, 0);
-  cam.background = color(0.7, 0.8, 1.0);
-
-  cam.defocus_angle = 0;
-  cam.render(world);
-}
-
-void light() {
+void light()
+{
   hittable_list world;
 
   auto perlin_tex = make_shared<perlin_noise_texture>(4);
 
   auto diffuse_lightTex = make_shared<diffuseLights>(color(5, 5, 5));
+  auto spot_light = make_shared<spotLight>(color(5, 5, 5), 10, 5);
 
   world.add(make_shared<Sphere>(point3(0, -1000, 0), 1000,
                                 make_shared<Lambertian>(perlin_tex)));
   world.add(make_shared<Sphere>(point3(0, 2, 0), 2,
                                 make_shared<Lambertian>(perlin_tex)));
-  world.add(make_shared<quadilateral>(Transform(1), point3(3, 1, -2),
-                                      Vec3(2, 0, 0), Vec3(0, 2, 0),
-                                      diffuse_lightTex));
+  world.add(make_shared<Sphere>(point3(0, 10, 0), 2, spot_light));
 
   world = hittable_list(make_shared<bvh_node>(world));
 
@@ -311,7 +222,8 @@ void light() {
 }
 
 // empty for now
-void cornell_box() {
+void cornell_box()
+{
   hittable_list world;
 
   using vec3 = glm::vec3;
@@ -321,39 +233,52 @@ void cornell_box() {
   auto green = make_shared<Lambertian>(color(.12, .45, .15));
   auto light = make_shared<diffuseLights>(color(15, 15, 15));
 
+  /*
   world.add(make_shared<quad>(Transform(1), point3(555, 0, 0), vec3(0, 555, 0),
                               vec3(0, 0, 555), green));
   world.add(make_shared<quad>(Transform(1), point3(0, 0, 0), vec3(0, 555, 0),
                               vec3(0, 0, 555), red));
+  */
   world.add(make_shared<quad>(Transform(1), point3(343, 554, 332),
                               vec3(-130, 0, 0), vec3(0, 0, -105), light));
+  /*
   world.add(make_shared<quad>(Transform(1), point3(0, 0, 0), vec3(555, 0, 0),
                               vec3(0, 0, 555), white));
   world.add(make_shared<quad>(Transform(1), point3(555, 555, 555),
                               vec3(-555, 0, 0), vec3(0, 0, -555), white));
   world.add(make_shared<quad>(Transform(1), point3(0, 0, 555), vec3(555, 0, 0),
                               vec3(0, 555, 0), white));
+                              */
 
-  Transform box1trans = glm::translate(glm::mat4(1), vec3(130, 0, 65));
-  Transform box1rot =
-      glm::rotate(glm::mat4(1), glm::radians(-18.f), vec3(0, 1, 0));
-  Transform box1 = box1trans * box1rot;
+  // Transform box1trans = glm::translate(glm::mat4(1), vec3(130, 0, 65));
+  // Transform box1rot =
+  //     glm::rotate(glm::mat4(1), glm::radians(-18.f), vec3(0, 1, 0));
+  // Transform box1 = box1trans * box1rot;
+  //
+  // Transform box2trans = glm::translate(glm::mat4(1), vec3(265, 0, 295));
+  // Transform box2rot =
+  //     glm::rotate(glm::mat4(1), glm::radians(15.f), vec3(0, 1, 0));
+  // Transform box2 = box2trans * box2rot;
+  //
+  // world.add(box(box1, point3(0, 0, 0), point3(165, 165, 165), white));
+  // world.add(box(box2, point3(0, 0, 0), point3(165, 330, 165), white));
 
-  Transform box2trans = glm::translate(glm::mat4(1), vec3(265, 0, 295));
-  Transform box2rot =
-      glm::rotate(glm::mat4(1), glm::radians(15.f), vec3(0, 1, 0));
-  Transform box2 = box2trans * box2rot;
+  Transform t = glm::scale(glm::mat4(1), glm::vec3(1));
+  t = glm::translate(glm::mat4(1), vec3(130, 0, 65));
 
-  world.add(box(box1, point3(0, 0, 0), point3(165, 165, 165), white));
-  world.add(box(box2, point3(0, 0, 0), point3(165, 330, 165), white));
+  auto teapot = make_shared<Mesh>("../WusonOBJ.obj", white, t);
+
+  world.add(teapot);
+
+  world = hittable_list(make_shared<bvh_node>(world));
 
   camera cam;
 
   cam.aspectratio = 1.0;
   cam.image_width = 600;
-  cam.samples_per_pixel = 1000;
+  cam.samples_per_pixel = 200;
   cam.max_depth = 50;
-  cam.background = color(0.65, 0.51, 0.56);
+  cam.background = color(1, 0, 0);
 
   cam.fov = 40;
   cam.lookfrom = point3(278, 278, -800);
@@ -365,46 +290,106 @@ void cornell_box() {
   cam.render(world);
 }
 
-void mesh_test() {
+void modelTest()
+{
   hittable_list world;
 
-  // ground
-  auto ground = make_shared<Lambertian>(color(.65, .05, .05));
-  world.add(make_shared<quadilateral>(
-      Transform(1), point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), ground));
-
-  // light
+  // basic light
   auto light = make_shared<diffuseLights>(color(15, 15, 15));
+
+  // add light
   world.add(make_shared<quadilateral>(Transform(1), point3(343, 554, 332),
-                                      Vec3(-130, 0, 0), Vec3(0, 0, -105),
-                                      light));
+                                      glm::vec3(-130, 0, 0),
+                                      glm::vec3(0, 0, -105), light));
 
-  // mesh
-  //  auto meshTrans = glm::translate(glm::mat4(1), glm::vec3(265, 0, 295));
-  //  auto mesh = make_shared<Mesh>(meshTrans, "../WusonOBJ.obj",
-  //                                make_shared<Lambertian>(color(0.8, 0.8,
-  //                                0.8)));
+  auto red = make_shared<Lambertian>(color(.65, .05, .05));
 
-  //  world.add(
-  //      make_shared<Triangle>(point3(0, 0, 0), Vec3(1, 0, 0), Vec3(0, 1, 0),
-  //                            make_shared<Lambertian>(color(0.8, 0.8, 0.8))));
-  //  world = hittable_list(make_shared<bvh_node>(world));
+  // render just one triangle
+  // world.add(make_shared<Triangle>(point3(0, 0, 0), point3(0, 0, 1),
+  //                                 point3(1, 0, 0), red));
 
   camera cam;
+
   cam.aspectratio = 1.0;
   cam.image_width = 600;
   cam.samples_per_pixel = 200;
   cam.max_depth = 50;
-  cam.background = color(0.5, 0.7, 0.5);
+  cam.background = color(0, 0, 0);
 
   cam.fov = 40;
   cam.lookfrom = point3(278, 278, -800);
   cam.lookat = point3(278, 278, 0);
-  cam.vup = Vec3(0, 1, 0);
+  cam.vup = glm::vec3(0, 1, 0);
 
   cam.defocus_angle = 0;
 
   cam.render(world);
 }
 
-int main() { firstBook(); }
+void triangleTest()
+{
+  hittable_list world;
+
+  camera cam;
+
+  cam.aspectratio = 1.0f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 200;
+  cam.max_depth = 50;
+  cam.background = color(0, 0, 0);
+
+  cam.fov = 40;
+  cam.lookfrom = point3(0, 0, -6);
+  cam.lookat = point3(0, 0, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  auto light = make_shared<diffuseLights>(color(15, 15, 15));
+
+
+  auto lightsource = make_shared<quadilateral>(Transform(1), point3(0.25, 1.5, -0.5),
+                                               glm::vec3(-.75f, 0, 0), glm::vec3(0, 0, .75f), light);
+
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(1.5, -2, -3),
+                                            glm::vec3(0, 0, 10), glm::vec3(0, 5, 0),
+                                            make_shared<Lambertian>(color(0.65f, .05f, .05f)));
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(-1.5, -2, -3),
+                                             glm::vec3(0, 0, 10), glm::vec3(0, 5, 0),
+                                             make_shared<Lambertian>(color(.12f, .45f, .15f)));
+
+  auto floor = make_shared<quadilateral>(Transform(1), point3(2, -1, -3),
+                                         glm::vec3(-10, 0, 0), glm::vec3(0, 0, 10),
+                                         make_shared<Lambertian>(color(.73f, .73f, .73f)));
+
+  auto ceiling = make_shared<quadilateral>(Transform(1), point3(2, 1.5, -3),
+                                           glm::vec3(-10, 0, 0), glm::vec3(0, 0, 10),
+                                           make_shared<Lambertian>(color(.73f, .73f, .73f)));
+
+  auto backWall = make_shared<quadilateral>(Transform(1), point3(2, -5, 3),
+                                            glm::vec3(-10, 0, 0), glm::vec3(0, 10, 0),
+                                            make_shared<Lambertian>(color(.73f, .73f, .73f)));
+
+  world.add(leftWall);
+  world.add(rightWall);
+  world.add(floor);
+  world.add(lightsource);
+  world.add(backWall);
+  world.add(ceiling);
+
+  Transform t = glm::scale(glm::mat4(1), glm::vec3(0.8));
+  t = glm::rotate(t, glm::radians(180.0f), glm::vec3(0, 1, 0));
+  t = glm::rotate(t, glm::radians(30.f), glm::vec3(1, 0, 0));
+
+  t = glm::translate(t, glm::vec3(0, 0, -5));
+
+
+  auto mesh = make_shared<Mesh>("../suzanne.obj", make_shared<Lambertian>(color(1, 1, 1)), t);
+
+  world.add(mesh);
+  world = hittable_list(make_shared<bvh_node>(world));
+
+  cam.render(world);
+}
+
+int main() { triangleTest(); }

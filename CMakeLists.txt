@@ -51,9 +51,23 @@ add_executable(raytracingbutgood
         external/tinyobjloader/tiny_obj_loader.cc
         src/objLoader.h
         src/data.h
+        src/bxdf/bxdf.cpp
+        src/bxdf/bxdf.h
+        src/Octree.cpp
+        src/Octree.h
+        src/triangle.h
+        src/triangle.cpp
 )
-target_link_libraries(raytracingbutgood glm assimp tbb)
+target_link_libraries(raytracingbutgood glm assimp TBB::tbb)
 target_include_directories(raytracingbutgood PRIVATE external/stb_image)
 target_include_directories(raytracingbutgood PRIVATE external/tinyobjloader)
+target_include_directories(raytracingbutgood PRIVATE src/)
 
-install(TARGETS raytracingbutgood RUNTIME DESTINATION bin)
+if (BUILD_SHARED_LIBS)
+    add_custom_command(TARGET raytracingbutgood POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:assimp>
+            $<TARGET_FILE_DIR:raytracingbutgood>)
+endif ()
+
+

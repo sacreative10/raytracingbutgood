@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <execution>
+#include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 #include <thread>
 
@@ -20,6 +21,12 @@ void printProgress(std::atomic<int> &counter, int total) {
 
 class camera {
 public:
+  Transform getTransform() {
+    glm::mat4 view = glm::lookAt(lookfrom, lookat, vup);
+
+    return view;
+  }
+
   void render(const Hittable &world) {
     initCamera();
     std::vector<uint32_t> horizontalIterator, verticalIterator;
@@ -42,20 +49,21 @@ public:
     std::for_each(std::execution::par, verticalIterator.begin(),
                   verticalIterator.end(), [&](uint32_t y) {
                     std::for_each(
-                        std::execution::par, horizontalIterator.begin(),
-                        horizontalIterator.end(), [&, y](uint32_t x) {
-                          color pixel_color(0, 0, 0);
-                          for (int s = 0; s < samples_per_pixel; ++s) {
-
-                            Ray r = sendRay(x, y);
+                      std::execution::par, horizontalIterator.begin(),
+                      horizontalIterator.end(), [&, y](uint32_t x) {
+                        color pixel_color(0, 0, 0);
+                        for (int s_j = 0; s_j < sqrt_samples; s_j++) {
+                          for (int s_i = 0; s_i < sqrt_samples; s_i++) {
+                            Ray r = sendRay(x, y, s_i, s_j);
                             pixel_color += ray_colour(r, world, max_depth);
                           }
-                          fb.setPixel(x, y, pixel_color.r, pixel_color.g,
-                                      pixel_color.b, samples_per_pixel);
+                        }
+                        fb.setPixel(x, y, pixel_color.r, pixel_color.g,
+                                    pixel_color.b, samples_per_pixel);
 
-                          // increment the counter
-                          counter++;
-                        });
+                        // increment the counter
+                        counter++;
+                      });
                   });
     // wait for the thread to finish
     t.join();
@@ -104,6 +112,8 @@ public:
   int image_width = 1920;
   int image_height = 1080;
   int samples_per_pixel = 10;
+  int sqrt_samples = 10;
+  float recip_sqrt_samples;
   int max_depth = 10;
 
   color background;
@@ -123,7 +133,10 @@ private:
     image_height = int(image_width / aspectratio);
     image_height = (image_height < 1) ? 1 : image_height;
 
-    pixel_samples_scale = 1.0 / samples_per_pixel;
+    sqrt_samples = int(sqrt(samples_per_pixel));
+    pixel_samples_scale =
+        1.0 / samples_per_pixel; // could be changed, essentially useless
+    recip_sqrt_samples = 1.0f / sqrt_samples;
 
     center = lookfrom;
 
@@ -139,8 +152,8 @@ private:
     Vec3 viewport_u = viewport_width * u;
     Vec3 viewport_v = viewport_height * -v;
 
-    pixel_delta_u = viewport_u / (float)image_width;
-    pixel_delta_v = viewport_v / (float)image_height;
+    pixel_delta_u = viewport_u / (float) image_width;
+    pixel_delta_v = viewport_v / (float) image_height;
 
     auto viewport_upper_left =
         center - (focus_dist * w) - (viewport_u / 2.0f) - (viewport_v / 2.0f);
@@ -148,14 +161,14 @@ private:
     pixel00_loc = viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
 
     auto defocus_radius = focus_dist * tan(glm::radians(defocus_angle / 2));
-    defocus_disk_u = u * (float)defocus_radius;
-    defocus_disk_v = v * (float)defocus_radius;
+    defocus_disk_u = u * (float) defocus_radius;
+    defocus_disk_v = v * (float) defocus_radius;
   }
 
-  Ray sendRay(int i, int j) {
-    auto offset = sample_square();
+  Ray sendRay(int i, int j, int s_i, int s_j) {
+    auto offset = sample_square_stratified(s_i, s_j);
     auto pixel_sample =
-        pixel00_loc + ((float)(i)*pixel_delta_u) + ((float)(j)*pixel_delta_v);
+        pixel00_loc + ((float) (i) * pixel_delta_u) + ((float) (j) * pixel_delta_v);
 
     glm::vec3 ray_origin =
         (defocus_angle <= 0) ? center : defocus_disk_sample();
@@ -168,6 +181,13 @@ private:
     return Vec3(random_float() - 0.5, random_float() - 0.5, 0);
   }
 
+  Vec3 sample_square_stratified(int s_i, int s_j) {
+    auto px = ((s_i + random_float()) * recip_sqrt_samples) - 0.5f;
+    auto py = ((s_j) + random_float() * recip_sqrt_samples) - 0.5f;
+
+    return Vec3(px, py, 0);
+  }
+
   point3 sample_disk(float radius) const {
     return radius * random_vector_in_unit_disk();
   }
@@ -176,6 +196,7 @@ private:
     auto p = random_vector_in_unit_disk();
     return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
   }
+
   color ray_colour(const Ray &ray, const Hittable &world, int depth) {
     if (depth <= 0)
       return color(0, 0, 0);

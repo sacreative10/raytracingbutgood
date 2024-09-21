@@ -70,6 +70,6 @@ inline int clamp(int x, int min, int max) {
 }
 
 #include "Ray.h"
+#include "geometry.h"
 #include <glm/glm.hpp>
-
 #endif
