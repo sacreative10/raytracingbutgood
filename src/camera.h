@@ -21,19 +21,26 @@ void printProgress(std::atomic<int> &counter, int total) {
 
 class camera {
 public:
-  Transform getTransform() {
+    camera(){
+    }
+
+    Transform getTransform() {
     glm::mat4 view = glm::lookAt(lookfrom, lookat, vup);
 
     return view;
   }
-
-  void render(const Hittable &world) {
+  void render(const Hittable &world)
+  {
+      std::mutex framebuffer_mutex;
+      render(world, framebuffer_mutex);
+  }
+  void render(const Hittable &world, std::mutex &framebuffer_mutex) {
     initCamera();
     std::vector<uint32_t> horizontalIterator, verticalIterator;
     horizontalIterator.resize(image_width);
     verticalIterator.resize(image_height);
 
-    Framebuffer fb(image_width, image_height);
+    fb = new Framebuffer(image_width, image_height);
 
     for (int i = 0; i < image_width; i++)
       horizontalIterator[i] = i;
@@ -45,7 +52,7 @@ public:
 #if MT
     // start a new thread, which will every 5 ticks, print the progress
     std::atomic<int> counter = 0;
-    std::thread t(printProgress, std::ref(counter), image_width * image_height);
+   // std::thread t(printProgress, std::ref(counter), image_width * image_height);
     std::for_each(std::execution::par, verticalIterator.begin(),
                   verticalIterator.end(), [&](uint32_t y) {
                     std::for_each(
@@ -58,7 +65,8 @@ public:
                             pixel_color += ray_colour(r, world, max_depth);
                           }
                         }
-                        fb.setPixel(x, y, pixel_color.r, pixel_color.g,
+                        std::lock_guard<std::mutex> lock(framebuffer_mutex);
+                        fb->setPixel(x, y, pixel_color.r, pixel_color.g,
                                     pixel_color.b, samples_per_pixel);
 
                         // increment the counter
@@ -66,7 +74,7 @@ public:
                       });
                   });
     // wait for the thread to finish
-    t.join();
+    //t.join();
 
 #elif MT_LINES
 
@@ -105,7 +113,7 @@ public:
     std::chrono::duration<double> elapsed = end - start;
     std::cerr << "\nDone. Time taken: " << elapsed.count() << " seconds\n";
 
-    fb.saveBuffer("output.png");
+    fb->saveBuffer("output.png");
   }
 
   float aspectratio = 1.0f;
@@ -128,6 +136,7 @@ public:
   float defocus_angle = 0;
   float focus_dist = 10;
 
+    Framebuffer* fb;
 private:
   void initCamera() {
     image_height = int(image_width / aspectratio);
@@ -232,5 +241,6 @@ private:
   glm::vec3 defocus_disk_u, defocus_disk_v;
   glm::vec3 pixel00_loc;
   float lens_rad;
-  point3 center; // camera center
+    point3 center; // camera center
+
 };

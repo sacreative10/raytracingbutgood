@@ -24,9 +24,82 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <memory>
+#include <GLFW/glfw3.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 using point3 = glm::vec3;
 using color = glm::vec3;
+
+
+void runGUI(camera& cam, std::mutex& frameBufferMutex)
+{
+
+    GLFWwindow* window;
+
+
+    if (!glfwInit())
+        return;
+
+    window = glfwCreateWindow(cam.image_width, cam.image_height, "Raytracing", NULL, NULL);
+
+    glfwMakeContextCurrent(window);
+
+
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.image_width, cam.image_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+
+    bool shutDown = false;
+
+    while (!glfwWindowShouldClose(window))
+    {
+        {
+            std::lock_guard<std::mutex> lock(frameBufferMutex);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, cam.image_width, cam.image_height, GL_RGB, GL_UNSIGNED_BYTE, cam.fb->getRawData());
+        }
+
+        glfwPollEvents();
+        // see if the user wants to close the window by clicking the x button
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        {
+            shutDown = true;
+        }
+        // start imgui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Triangle Test", nullptr, ImGuiWindowFlags_NoTitleBar);
+        ImGui::Image((void*)(intptr_t)texture, ImVec2(cam.image_width + 10, cam.image_height + 10));
+        ImGui::End();
+
+        ImGui::Render();
+        glViewport(0, 0, cam.image_width, cam.image_height);
+        glClearColor(0.0, 0.0, 0.0, 1.0);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
+    }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    glfwDestroyWindow(window);
+    glfwTerminate();
+}
 
 void firstBook()
 {
@@ -100,7 +173,12 @@ void firstBook()
   cam.focus_dist = 10.0;
   cam.background = color(0.7, 0.8, 1.0);
 
-  cam.render(world);
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world); });
+
+    runGUI(cam, frameBufferMutex);
+    renderThread.join();
+
 }
 
 void checkered_spheres()
@@ -389,7 +467,13 @@ void triangleTest()
   world.add(mesh);
   world = hittable_list(make_shared<bvh_node>(world));
 
-  cam.render(world);
+  std::mutex frameBufferMutex;
+
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+    runGUI(cam, frameBufferMutex);
+    renderThread.join();
+
+
 }
 
-int main() { triangleTest(); }
+int main() { firstBook(); }

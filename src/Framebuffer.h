@@ -21,6 +21,7 @@ public:
     void getPixel(const size_t x, const size_t y, uint8_t& r, uint8_t& g, uint8_t& b);
 
     void saveBuffer(const char* fileName);
+    uint8_t* getRawData() { return m_bufferData; }
 
     inline size_t getHeight(){return m_height;}
     inline size_t getWidth(){return m_width;}

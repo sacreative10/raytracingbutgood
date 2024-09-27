@@ -6,11 +6,25 @@ file(GLOB SOURCES src/*.cpp)
 
 add_subdirectory(external/glm)
 add_subdirectory(external/assimp)
+add_subdirectory(external/glfw)
 add_compile_definitions(MT)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
+set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+set(IMGUI_PATH "external/imgui/")
+
+file(GLOB IMGUI_SOURCES ${IMGUI_PATH}/*.cpp)
+file(GLOB IMGUI_SOURCES_BACKEND ${IMGUI_PATH}/backends/imgui_impl_glfw.cpp ${IMGUI_PATH}/backends/imgui_impl_opengl3.cpp)
+add_library(ImGUI STATIC ${IMGUI_SOURCES} ${IMGUI_SOURCES_BACKEND})
+target_link_libraries(ImGUI OpenGL::GL)
+target_link_libraries(ImGUI glfw)
+target_include_directories(ImGUI PUBLIC ${IMGUI_PATH})
+target_include_directories(ImGUI PUBLIC ${IMGUI_PATH}/backends)
+
 
 add_executable(raytracingbutgood
         src/camera.h
@@ -58,7 +72,14 @@ add_executable(raytracingbutgood
         src/triangle.h
         src/triangle.cpp
 )
-target_link_libraries(raytracingbutgood glm assimp TBB::tbb)
+
+# find opengl
+find_package(OpenGL REQUIRED)
+target_link_libraries(raytracingbutgood OpenGL::GL)
+target_link_libraries(raytracingbutgood glm assimp TBB::tbb )
+target_link_libraries(raytracingbutgood glfw)
+target_link_libraries(raytracingbutgood ImGUI)
+
 target_include_directories(raytracingbutgood PRIVATE external/stb_image)
 target_include_directories(raytracingbutgood PRIVATE external/tinyobjloader)
 target_include_directories(raytracingbutgood PRIVATE src/)
