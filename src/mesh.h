@@ -38,7 +38,7 @@ public:
         bvh = std::make_unique<bvh_node>(list.objects, 0, list.objects.size());
     }
 
-    Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform modelMatrix = Transform());
+    Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform modelMatrix = Transform(), bool useOctree = true);
 
     bool hit(const Ray& r, float t_min, float t_max, hitrecord& rec) const override;
 
@@ -53,6 +53,8 @@ private:
     std::vector<glm::vec2> uvs;
     hittable_list list;
     std::unique_ptr<bvh_node> bvh;
+    bool useOctree;
+    Octree* octree;
 
 
     aabb bbox;

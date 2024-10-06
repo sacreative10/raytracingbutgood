@@ -28,6 +28,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include "hyperbolic.h"
 
 using point3 = glm::vec3;
 using color = glm::vec3;
@@ -57,6 +58,7 @@ void runGUI(camera& cam, std::mutex& frameBufferMutex)
 
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.IniFilename = NULL;
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 130");
 
@@ -240,7 +242,9 @@ void perlin_spheres()
 {
   hittable_list world;
 
-  auto perlin_tex = make_shared<perlin_noise_texture>(4);
+  color col = color(0.8, 0.1, 0.8);
+  color col2 = color(0.8, 0.8, 0.8);
+  auto perlin_tex = make_shared<perlin_noise_texture_color>(4, col, col2);
   world.add(make_shared<Sphere>(point3(0, -1000, 0), 1000,
                                 make_shared<Lambertian>(perlin_tex)));
   world.add(make_shared<Sphere>(point3(0, 2, 0), 2,
@@ -261,7 +265,11 @@ void perlin_spheres()
 
   cam.defocus_angle = 0;
 
-  cam.render(world);
+  std::mutex frameBufferMutex;
+
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
 }
 
 void light()
@@ -462,7 +470,7 @@ void triangleTest()
   t = glm::translate(t, glm::vec3(0, 0, -5));
 
 
-  auto mesh = make_shared<Mesh>("../suzanne.obj", make_shared<Lambertian>(color(1, 1, 1)), t);
+  auto mesh = make_shared<Mesh>("../teapot.obj", make_shared<Lambertian>(color(1, 1, 1)), t);
 
   world.add(mesh);
   world = hittable_list(make_shared<bvh_node>(world));
@@ -470,10 +478,191 @@ void triangleTest()
   std::mutex frameBufferMutex;
 
   std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
-    runGUI(cam, frameBufferMutex);
+    //runGUI(cam, frameBufferMutex);
     renderThread.join();
+}
 
+
+void scene1()
+{
+  hittable_list world;
+
+  camera cam;
+
+  cam.aspectratio = 1.0f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 200;
+  cam.max_depth = 50;
+  cam.background = color(0.f, 0.f, 0.f);
+
+  cam.fov = 45;
+  cam.lookfrom = point3(0, 1.3, -6);
+  cam.lookat = point3(0, 0.5, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+
+  // ground col1 is orange
+  color groundCol1 = color(0.49, 0.376, 0.165);
+  // ground col2 is white
+  color groundCol2 = color(0.753, 0.651, 0.216);
+
+  auto kleinBottleInnerMat = make_shared<Metal>(color(0.8, 0.8, 0.8), 0.2f);
+
+  color piColor = color(0.1, 0.1, 0.9);
+  auto piMaterial = make_shared<Metal>(piColor, 0.001f);
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+
+  // ground sphere
+  auto ground = make_shared<Sphere>(point3(0, -1000, 0), 1000,
+                                    make_shared<Lambertian>(
+                                        make_shared<perlin_noise_texture_color>(0.8, groundCol1, groundCol2)));
+
+
+  Transform kleinBottleTOuter = glm::scale(glm::mat4(1), glm::vec3(0.1));
+  kleinBottleTOuter = glm::rotate(kleinBottleTOuter, glm::radians(180.0f), glm::vec3(0, 1, 0));
+  kleinBottleTOuter = glm::translate(kleinBottleTOuter, glm::vec3(0, 10, -2));
+
+
+  auto kleinBottleOuter = make_shared<Mesh>("../kleinBottle.obj", make_shared<dielectric>(9.f), kleinBottleTOuter);
+
+  Transform piT = glm::scale(glm::mat4(1), glm::vec3(0.5f));
+  piT = glm::translate(piT, glm::vec3(2, 1, -2));
+
+  auto pi = make_shared<Mesh>("../dodecahedron.obj", piMaterial, piT);
+
+
+  for (int a = -11; a < 11; a++)
+  {
+    for (int b = -11; b < 11; b++)
+    {
+      auto choose_mat = random_float();
+      point3 center(a + 0.9 * random_float(), 0.2, b + 0.9 * random_float());
+
+      if ((center - point3(4, 0.2, 0)).length() > 0.9)
+      {
+        shared_ptr<material> sphere_material;
+
+        if (choose_mat < 0.8)
+        {
+          // diffuse
+          auto albedo = randomVector() * randomVector();
+          sphere_material = make_shared<Lambertian>(albedo);
+          world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+        }
+        else if (choose_mat < 0.95)
+        {
+          // metal
+          auto albedo = randomVector(0.5f, 1.0f);
+          auto fuzz = random_float(0, 0.5);
+          sphere_material = make_shared<Metal>(albedo, fuzz);
+          world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+        }
+        else
+        {
+          // glass
+          sphere_material = make_shared<dielectric>(1.5);
+          world.add(make_shared<Sphere>(center, 0.2, sphere_material));
+        }
+      }
+    }
+  }
+  auto light = make_shared<Sphere>(point3(0, 5, 0), 1, lightMat);
+
+  world.add(ground);
+  world.add(kleinBottleOuter);
+  world.add(pi);
+  world.add(light);
+  world = hittable_list(make_shared<bvh_node>(world));
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
+}
+
+
+void chessScene()
+{
+  hittable_list world;
+
+  camera cam;
+
+  cam.aspectratio = 1.0f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 200;
+  cam.max_depth = 50;
+  cam.background = color(0.8f, 0.8f, 0.8f);
+
+  cam.fov = 45;
+  cam.lookfrom = point3(0, 0.7, -7);
+  cam.lookat = point3(0, 0.5, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  auto groundMat = make_shared<Metal>(make_shared<checkered>(1.f, color(0.1f, 0.1f, 0.1f), color(0.9f, 0.9f, 0.9f)), 0.01f);
+  auto ground = make_shared<Sphere>(point3(0, -1000, 0), 1000, groundMat);
+  world.add(ground);
+
+  auto knightColor = color(0.1, 0.1, 0.1);
+  auto knightMat = make_shared<Lambertian>(knightColor);
+  Transform knightT = glm::translate(glm::mat4(1), glm::vec3(0.5f, 0, -1.5f));
+  knightT = glm::rotate(knightT, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+  knightT = glm::scale(knightT, glm::vec3(0.005f));
+  auto knight = make_shared<Mesh>("../Knight.obj", knightMat, knightT);
+  world.add(knight);
+
+  auto kingColor = color(0.8, 0.8, 0.8);
+  auto kingMat = make_shared<Lambertian>(kingColor);
+  Transform kingT = glm::translate(glm::mat4(1), glm::vec3(-0.5f, 0, -2.5f));
+  kingT = glm::rotate(kingT, glm::radians(-90.0f), glm::vec3(0, 1, 0));
+  kingT = glm::scale(kingT, glm::vec3(0.0045f));
+  auto king = make_shared<Mesh>("../king.obj", kingMat, kingT);
+  world.add(king);
+
+  color rightWallColor = color(.12, .45, .15);
+  auto rightWallMat = make_shared<Metal>(rightWallColor, 0.01f);
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(-1, -1, -6),
+                                            glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), rightWallMat);
+  world.add(rightWall);
+
+  auto leftWallColor = color(.65, .05, .05);
+  auto leftWallMat = make_shared<Metal>(leftWallColor, 0.01f);
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(1, -1, -6),
+                                            glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), leftWallMat);
+  world.add(leftWall);
+
+  auto backWallColor = color(.73, .73, .73);
+  auto backWallMat = make_shared<Metal>(backWallColor, 0.01f);
+  auto backWall = make_shared<quadilateral>(Transform(1), point3(2, -1, 2),
+                                            glm::vec3(-10, 0, 0), glm::vec3(0, 10, 0), backWallMat);
+  world.add(backWall);
+
+  auto ceilingColor = color(.1, .1, .1);
+  auto ceilingMat = make_shared<Metal>(ceilingColor, 0.01f);
+  auto ceiling = make_shared<quadilateral>(Transform(1), point3(2, 3, -6),
+                                           glm::vec3(-10, 0, 0), glm::vec3(0, 0, 10), ceilingMat);
+
+  world.add(ceiling);
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+  auto light = make_shared<quadilateral>(Transform(1), point3(0.5, 2.9, -2),
+                                         glm::vec3(-1, 0, 0), glm::vec3(0, 0, 2), lightMat);
+
+  world.add(light);
+
+
+
+
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
 
 }
 
-int main() { firstBook(); }
+int main() { chessScene(); }

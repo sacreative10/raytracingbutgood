@@ -53,3 +53,10 @@ float perlin::turb(const point3 &p, int depth) const {
 
   return fabs(accum);
 }
+
+
+color lerpC(float t, const color& a, const color& b)
+{
+  return (1 - t) * a + t * b;
+}
+

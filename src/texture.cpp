@@ -11,3 +11,4 @@ color checkered::value(point2 uv, const point3 &p) const {
 
   return isEven ? even->value(uv, p) : odd->value(uv, p);
 }
+

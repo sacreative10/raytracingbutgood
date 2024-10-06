@@ -44,19 +44,21 @@ public:
 
 class Metal : public material {
 public:
-  Metal(const color &a, float fuzz) : m_albedo(a), fuzz(fuzz) {}
+  Metal(const color &a, float fuzz) : tex(make_shared<solid_colour>(a)), fuzz(fuzz) {}
+
+  Metal(shared_ptr<Texture> tex, float fuzz) : tex(tex), fuzz(fuzz) {}
 
   virtual bool scatter(const Ray &r_in, const hitrecord &rec,
                        color &attenuation, Ray &scattered) const override {
     glm::vec3 reflected = reflect(glm::normalize(r_in.direction()), rec.normal);
     scattered = Ray(rec.p, reflected + fuzz * random_in_unit_sphere());
-    attenuation = m_albedo;
+    attenuation = tex->value(rec.uv, rec.p);
     return (dot(scattered.direction(), rec.normal) > 0);
   }
 
 public:
-  color m_albedo;
   float fuzz;
+  shared_ptr<Texture> tex;
 };
 
 class dielectric : public material {

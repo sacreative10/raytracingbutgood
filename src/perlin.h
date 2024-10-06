@@ -74,4 +74,23 @@ private:
   float scale;
 };
 
+color lerpC(float t, const color &a, const color &b);
+class perlin_noise_texture_color : public Texture
+{
+public:
+  perlin_noise_texture_color() {}
+
+  perlin_noise_texture_color(float sc, color c1, color c2) : scale(sc), color1(c1), color2(c2) {}
+
+  color value(point2 uv, const point3 &p) const override {
+    return lerpC(0.5f * (1.0f + std::sin(scale * p.z + 10 * noise.turb(p, 7))), color1, color2);
+  }
+
+
+private:
+  perlin noise;
+  float scale;
+  color color1, color2;
+};
+
 #endif // RAYTRACINGBUTGOOD_PERLIN_H

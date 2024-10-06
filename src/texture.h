@@ -40,4 +40,5 @@ private:
   shared_ptr<Texture> odd;
 };
 
+
 #endif // ifndef!RAYTRACINGBUTGOOD_TEXTURE_H

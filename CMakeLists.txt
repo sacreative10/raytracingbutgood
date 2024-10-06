@@ -11,7 +11,7 @@ add_compile_definitions(MT)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb3 -lprofiler")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -71,6 +71,8 @@ add_executable(raytracingbutgood
         src/Octree.h
         src/triangle.h
         src/triangle.cpp
+        src/hyperbolic.cpp
+        src/hyperbolic.h
 )
 
 # find opengl

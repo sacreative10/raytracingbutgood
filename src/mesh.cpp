@@ -15,7 +15,7 @@ struct MeshData
     std::vector<glm::vec3> normals;
 };
 
-Mesh::Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform modelMatrix)
+Mesh::Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform modelMatrix, bool useOctree)
 {
     Assimp::Importer importer;
 
@@ -70,13 +70,27 @@ Mesh::Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform
     calculate_bounding_box(meshData.vertices, modelMatrix);
 
 
-    bvh = std::make_unique<bvh_node>(list.objects, 0, list.objects.size());
+    if (useOctree)
+    {
+        octree = new Octree(bbox);
+        octree->build(triangles);
+        this->useOctree = true;
+    } else
+    {
+        bvh = std::make_unique<bvh_node>(list.objects, 0, list.objects.size());
+    }
 }
 
 
 bool Mesh::hit(const Ray& r, float t_min, float t_max, hitrecord& rec) const
 {
-    return bvh->hit(r, t_min, t_max, rec);
+    if (useOctree)
+    {
+        return octree->hit(r, t_min, t_max, rec);
+    } else
+    {
+        return bvh->hit(r, t_min, t_max, rec);
+    }
 }
 
 
@@ -99,8 +113,6 @@ void Mesh::calculate_bounding_box(const std::vector<glm::vec3>& vertices, Transf
         max.z = std::max(max.z, transformed_vertex.z);
     }
 
-    std::cout << "\n min: " << min.x << ", " << min.y << ", " << min.z;
-    std::cout << "\n max: " << max.x << ", " << max.y << ", " << max.z;
 
     bbox = aabb(min, max);
 }

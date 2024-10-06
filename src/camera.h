@@ -34,50 +34,71 @@ public:
       std::mutex framebuffer_mutex;
       render(world, framebuffer_mutex);
   }
-  void render(const Hittable &world, std::mutex &framebuffer_mutex) {
+void render(const Hittable& world, std::mutex& framebuffer_mutex)
+{
     initCamera();
-    std::vector<uint32_t> horizontalIterator, verticalIterator;
-    horizontalIterator.resize(image_width);
-    verticalIterator.resize(image_height);
+
+    // Define chunk size (e.g., 16x16 pixel chunks)
+    const int chunk_size = 8;
 
     fb = new Framebuffer(image_width, image_height);
 
-    for (int i = 0; i < image_width; i++)
-      horizontalIterator[i] = i;
-    for (int i = 0; i < image_height; i++)
-      verticalIterator[i] = i;
+    // Vector to store chunk positions (x_start, y_start)
+    std::vector<std::pair<int, int>> chunks;
+
+    for (int y = 0; y < image_height; y += chunk_size) {
+        for (int x = 0; x < image_width; x += chunk_size) {
+            chunks.emplace_back(x, y);
+        }
+    }
 
     auto start = std::chrono::high_resolution_clock::now();
 
 #if MT
-    // start a new thread, which will every 5 ticks, print the progress
     std::atomic<int> counter = 0;
-   // std::thread t(printProgress, std::ref(counter), image_width * image_height);
-    std::for_each(std::execution::par, verticalIterator.begin(),
-                  verticalIterator.end(), [&](uint32_t y) {
-                    std::for_each(
-                      std::execution::par, horizontalIterator.begin(),
-                      horizontalIterator.end(), [&, y](uint32_t x) {
-                        color pixel_color(0, 0, 0);
-                        for (int s_j = 0; s_j < sqrt_samples; s_j++) {
-                          for (int s_i = 0; s_i < sqrt_samples; s_i++) {
-                            Ray r = sendRay(x, y, s_i, s_j);
-                            pixel_color += ray_colour(r, world, max_depth);
-                          }
-                        }
-                        std::lock_guard<std::mutex> lock(framebuffer_mutex);
-                        fb->setPixel(x, y, pixel_color.r, pixel_color.g,
-                                    pixel_color.b, samples_per_pixel);
 
-                        // increment the counter
-                        counter++;
-                      });
+    // Use parallel execution to process each chunk
+    std::for_each(std::execution::par, chunks.begin(), chunks.end(),
+                  [&](std::pair<int, int> chunk)
+                  {
+                      int x_start = chunk.first;
+                      int y_start = chunk.second;
+
+                      // Create local pixel color storage for each thread
+                      std::vector<std::pair<int, int>> pixels;
+
+                      // Generate the list of pixels within this chunk
+                      for (int y = y_start; y < std::min(y_start + chunk_size, image_height); ++y) {
+                          for (int x = x_start; x < std::min(x_start + chunk_size, image_width); ++x) {
+                              pixels.emplace_back(x, y);
+                          }
+                      }
+
+                      // Process pixels inside the chunk in parallel
+                      std::for_each(std::execution::par, pixels.begin(), pixels.end(),
+                                    [&](std::pair<int, int> pixel)
+                                    {
+                                        int x = pixel.first;
+                                        int y = pixel.second;
+
+                                        color pixel_color(0, 0, 0);
+                                        for (int s_j = 0; s_j < sqrt_samples; s_j++) {
+                                            for (int s_i = 0; s_i < sqrt_samples; s_i++) {
+                                                Ray r = sendRay(x, y, s_i, s_j);
+                                                pixel_color += ray_colour(r, world, max_depth);
+                                            }
+                                        }
+
+                                        // Lock framebuffer before writing to it
+                                        std::lock_guard<std::mutex> guard(framebuffer_mutex);
+                                        fb->setPixel(x, y, pixel_color.r, pixel_color.g, pixel_color.b, samples_per_pixel);
+                                    });
+
+                      // Increment counter after processing each chunk
+                      counter += chunk_size * chunk_size;
                   });
-    // wait for the thread to finish
-    //t.join();
 
 #elif MT_LINES
-
     std::for_each(std::execution::par, verticalIterator.begin(),
                   verticalIterator.end(), [&](uint32_t y) {
                     std::cerr << "\rScanlines done: " << y << ' ' << std::flush;
@@ -96,9 +117,9 @@ public:
                   });
 
 #else
-    for (size_t y = 0; y < fb.getHeight(); y++) {
+    for (size_t y = 0; y < fb->getHeight(); y++) {
       std::cerr << "\rScanlines done: " << y << ' ' << std::flush;
-      for (size_t x = 0; x < fb.getWidth(); x++) {
+      for (size_t x = 0; x < fb->getWidth(); x++) {
         color pixel_color(0, 0, 0);
         for (int s = 0; s < samples_per_pixel; ++s) {
           Ray r = sendRay(x, y);
@@ -114,9 +135,8 @@ public:
     std::cerr << "\nDone. Time taken: " << elapsed.count() << " seconds\n";
 
     fb->saveBuffer("output.png");
-  }
-
-  float aspectratio = 1.0f;
+}
+    float aspectratio = 1.0f;
   int image_width = 1920;
   int image_height = 1080;
   int samples_per_pixel = 10;
