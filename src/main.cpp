@@ -590,10 +590,10 @@ void chessScene()
 
   camera cam;
 
-  cam.aspectratio = 1.0f;
-  cam.image_width = 600;
-  cam.samples_per_pixel = 200;
-  cam.max_depth = 50;
+  cam.aspectratio = 16.f / 9.f;
+  cam.image_width = 1920;
+  cam.samples_per_pixel = 400;
+  cam.max_depth = 100;
   cam.background = color(0.8f, 0.8f, 0.8f);
 
   cam.fov = 45;
