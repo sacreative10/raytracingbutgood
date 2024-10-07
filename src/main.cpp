@@ -625,13 +625,13 @@ void chessScene()
 
   color rightWallColor = color(.12, .45, .15);
   auto rightWallMat = make_shared<Metal>(rightWallColor, 0.01f);
-  auto rightWall = make_shared<quadilateral>(Transform(1), point3(-1, -1, -6),
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(-1, -2, -6),
                                             glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), rightWallMat);
   world.add(rightWall);
 
   auto leftWallColor = color(.65, .05, .05);
   auto leftWallMat = make_shared<Metal>(leftWallColor, 0.01f);
-  auto leftWall = make_shared<quadilateral>(Transform(1), point3(1, -1, -6),
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(1, -2, -6),
                                             glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), leftWallMat);
   world.add(leftWall);
 
@@ -662,7 +662,78 @@ void chessScene()
   std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
   runGUI(cam, frameBufferMutex);
   renderThread.join();
-
 }
 
-int main() { chessScene(); }
+void stanfordDragon()
+{
+  hittable_list world;
+
+  camera cam;
+
+  cam.aspectratio = 1.f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 400;
+  cam.max_depth = 100;
+  cam.background = color(0.8f, 0.8f, 0.8f);
+
+  cam.fov = 45;
+  cam.lookfrom = point3(0, 0.7, -7);
+  cam.lookat = point3(0, 0.5, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  auto groundMat = make_shared<Metal>(make_shared<checkered>(1.f, color(0.1f, 0.1f, 0.1f), color(0.9f, 0.9f, 0.9f)), 0.01f);
+  auto ground = make_shared<Sphere>(point3(0, -1000, 0), 1000, groundMat);
+ // world.add(ground);
+
+  auto carColor = color(0.05, .05, .65);
+  auto carMat = make_shared<Metal>(carColor, 0.01f);
+  Transform carT = glm::translate(glm::mat4(1), glm::vec3(0, 0, -2));
+  carT = glm::scale(carT, glm::vec3(0.2f));
+  auto car = make_shared<Mesh>("../dragon.obj", carMat, carT);
+  world.add(car);
+
+  auto leftWallColor = color(.12, .45, .15);
+  auto leftWallMat = make_shared<Metal>(leftWallColor, 0.05f);
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(-1.5, -2, -6),
+                                            glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), leftWallMat);
+  world.add(leftWall);
+
+  auto rightWallColor = color(.65, .05, .05);
+  auto rightWallMat = make_shared<Metal>(rightWallColor, 0.05f);
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(1.5, -2, -6),
+                                             glm::vec3(0, 0, 10), glm::vec3(0, 5, 0), rightWallMat);
+  world.add(rightWall);
+
+  auto backWallColor = color(.73, .73, .73);
+  auto backWallMat = make_shared<Metal>(backWallColor, 0.6f);
+  auto backWall = make_shared<quadilateral>(Transform(1), point3(2, -1, 0.5),
+                                            glm::vec3(-10, 0, 0), glm::vec3(0, 10, 0), backWallMat);
+
+  world.add (backWall);
+
+  auto ceilingColor = color(.1, .1, .1);
+  auto ceilingMat = make_shared<Metal>(ceilingColor, 0.1f);
+  auto ceiling = make_shared<quadilateral>(Transform(1), point3(2, 3, -6),
+                                           glm::vec3(-20, 0, 0), glm::vec3(0, 0, 20), ceilingMat);
+  world.add (ceiling);
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+  auto light = make_shared<quadilateral>(Transform(1), point3(0.5, 2.9, -4),
+                                         glm::vec3(-1, 0, 0), glm::vec3(0, 0, 3), lightMat);
+  world.add(light);
+
+  auto floor = make_shared<quadilateral>(Transform(1), point3(2, -1, -6),
+                                         glm::vec3(-10, 0, 0), glm::vec3(0, 0, 8),
+                                         make_shared<Lambertian>(color(.73f, .73f, .73f)));
+
+  world.add (floor);
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
+}
+
+int main() { stanfordDragon(); }

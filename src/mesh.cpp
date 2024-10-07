@@ -69,7 +69,6 @@ Mesh::Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform
 
     calculate_bounding_box(meshData.vertices, modelMatrix);
 
-
     if (useOctree)
     {
         octree = new Octree(bbox);

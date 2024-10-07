@@ -11,7 +11,7 @@
 class Octree
 {
 public:
-    Octree(const aabb& boundingBox, int maxDepth = 20, int maxTrianglesPerNode = 10)
+    Octree(const aabb& boundingBox, int maxDepth = 15, int maxTrianglesPerNode = 100)
         : bbox(boundingBox), depth(0), maxDepth(maxDepth), maxTrianglesPerNode(maxTrianglesPerNode)
     {
     }
