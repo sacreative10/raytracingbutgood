@@ -15,6 +15,7 @@ struct MeshData
     std::vector<glm::vec3> normals;
 };
 
+
 Mesh::Mesh(const std::string& filename, std::shared_ptr<material> mat, Transform modelMatrix, bool useOctree)
 {
     Assimp::Importer importer;

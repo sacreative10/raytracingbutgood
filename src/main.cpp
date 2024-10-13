@@ -688,7 +688,7 @@ void stanfordDragon()
  // world.add(ground);
 
   auto carColor = color(0.05, .05, .65);
-  auto carMat = make_shared<Metal>(carColor, 0.01f);
+  auto carMat = make_shared<dielectric>(1.f / 1.55f);
   Transform carT = glm::translate(glm::mat4(1), glm::vec3(0, 0, -2));
   carT = glm::scale(carT, glm::vec3(0.2f));
   auto car = make_shared<Mesh>("../dragon.obj", carMat, carT);
@@ -736,4 +736,145 @@ void stanfordDragon()
   renderThread.join();
 }
 
-int main() { stanfordDragon(); }
+void teapots()
+{
+  camera cam;
+
+  hittable_list world;
+
+  cam.aspectratio = 1.f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 400;
+  cam.max_depth = 100;
+  cam.background = color(0.8f, 0.8f, 0.8f);
+
+  cam.fov = 45;
+  cam.lookfrom = point3(1.9, 0.7, -1.9);
+  cam.lookat = point3(-2, 0.1f, -6);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  auto groundMat = make_shared<Metal>(make_shared<image_texture>("../marbletiling.jpg"), 0.3f);
+  auto groundQuad = make_shared<quadilateral>(Transform(1), point3(-2, 0, -6),
+                                             glm::vec3(4, 0, 0), glm::vec3(0, 0, 4), groundMat);
+  world.add(groundQuad);
+
+  auto pinkTeapotCol = color(0.8, 0.1, 0.8);
+  auto pinkTeapotMat = make_shared<Lambertian>(pinkTeapotCol);
+  Transform pinkTeapotT = glm::translate(glm::mat4(1), glm::vec3(0, 0, -4.5));
+  pinkTeapotT = glm::rotate(pinkTeapotT, glm::radians(-45.f), glm::vec3(0, 1, 0));
+  pinkTeapotT = glm::scale(pinkTeapotT, glm::vec3(0.15f));
+  auto pinkTeapot = make_shared<Mesh>("../teapot.obj", pinkTeapotMat, pinkTeapotT);
+
+  auto blueTeapotCol = color(0.1, 0.1, 0.8);
+  auto blueTeapotMat = make_shared<Lambertian>(blueTeapotCol);
+  Transform blueTeapotT = glm::translate(glm::mat4(1), glm::vec3(-0.2, 0, -3.2));
+  blueTeapotT = glm::rotate(blueTeapotT, glm::radians(-90.f), glm::vec3(0, 1, 0));
+  blueTeapotT = glm::scale(blueTeapotT, glm::vec3(0.15f));
+  auto blueTeapot = make_shared<Mesh>("../teapot.obj", blueTeapotMat, blueTeapotT);
+
+  auto metalTeapotCol = color(0.1f);
+  auto metalTeapotMat = make_shared<Metal>(metalTeapotCol, 0.001f);
+Transform metalTeapotT = glm::translate(glm::mat4(1), glm::vec3(-1.f, 0, -4));
+  metalTeapotT = glm::rotate(metalTeapotT, glm::radians(90.0f), glm::vec3(0, 1, 0));
+  metalTeapotT = glm::scale(metalTeapotT, glm::vec3(0.2f));
+  auto metalTeapot = make_shared<Mesh>("../teapot.obj", metalTeapotMat, metalTeapotT);
+
+
+
+
+  world.add(pinkTeapot);
+  world.add (blueTeapot);
+  world.add(metalTeapot);
+
+  auto wallColor = color(.8, .8, .8);
+  auto wallMat = make_shared<Lambertian>(wallColor);
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(-2, 0, -6),
+                                            glm::vec3(0, 0, 4), glm::vec3(0, 5, 0), wallMat);
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(2, 0, -6),
+                                             glm::vec3(0, 0, 4), glm::vec3(0, 5, 0), wallMat);
+  auto backWall = make_shared<quadilateral>(Transform(1), point3(-2, 0, -1),
+                                            glm::vec3(4, 0, 0), glm::vec3(0, 5, 0), wallMat);
+  auto ceiling = make_shared<quadilateral>(Transform(1), point3(-2, 5, -6),
+                                           glm::vec3(-10, 0, 0), glm::vec3(0, 0, 10), wallMat);
+  auto frontWall = make_shared<quadilateral>(Transform(1), point3(2, 0, -6),
+                                             glm::vec3(-4, 0, 0), glm::vec3(0, 5, 0), wallMat);
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+  auto light = make_shared<quadilateral>(Transform(1), point3(-1.9, 0, -4),
+                                         glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), lightMat);
+
+  world.add(leftWall);
+  world.add(rightWall);
+  world.add(backWall);
+  world.add(ceiling);
+  world.add(frontWall);
+  world.add(light);
+
+  world = hittable_list(make_shared<bvh_node>(world));
+
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
+
+}
+
+
+void Lucy()
+{
+  camera cam;
+
+  hittable_list world;
+
+  cam.aspectratio = 1.f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 400;
+  cam.max_depth = 100;
+  cam.background = color(0.0f, 0.0f, 0.0f);
+
+  cam.fov = 45;
+  cam.lookfrom = point3(0, 2.f, -2);
+  cam.lookat = point3(0, 1.f, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+
+  auto groundMat = make_shared<Metal>(make_shared<image_texture>("../marbletiling.jpg"), 0.3f);
+  auto groundQuad = make_shared<quadilateral>(Transform(1), point3(-2, 0, -6),
+                                             glm::vec3(4, 0, 0), glm::vec3(0, 0, 4), groundMat);
+
+  // lucy will be of gold colour
+  auto lucyColor = color(0.8, 0.6, 0.2);
+  auto lucyMat = make_shared<Metal>(lucyColor, 0.1f);
+  Transform lucyT = glm::scale(glm::mat4(1), glm::vec3(10.f));
+  lucyT = glm::rotate (lucyT, glm::radians(180.0f), glm::vec3(0, 1, 0));
+  lucyT = glm::translate(lucyT, glm::vec3(0, 0, 0));
+  auto lucy = make_shared<Mesh>("../lucyHigh.obj", lucyMat, lucyT);
+
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+  // the light faces the model from the front
+  auto lightT = glm::rotate(glm::mat4(1), glm::radians(-45.f), glm::vec3(1, 0, 0));
+  lightT = glm::translate(lightT, glm::vec3(0, 1, -2));
+  auto light = make_shared<quadilateral>(lightT, point3(1, 0, 1),
+                                         glm::vec3(-2, 0, 0), glm::vec3(0, 0, -2), lightMat);
+  world.add(light);
+
+  //world.add(groundQuad);
+  world.add(lucy);
+
+  world = hittable_list(make_shared<bvh_node>(world));
+
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
+
+}
+
+int main() { Lucy(); }
