@@ -11,7 +11,7 @@ add_compile_definitions(MT)
 find_package(TBB REQUIRED COMPONENTS tbb)
 
 set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ggdb3 -lprofiler")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

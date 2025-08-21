@@ -687,12 +687,15 @@ void stanfordDragon()
   auto ground = make_shared<Sphere>(point3(0, -1000, 0), 1000, groundMat);
  // world.add(ground);
 
-  auto carColor = color(0.05, .05, .65);
-  auto carMat = make_shared<dielectric>(1.f / 1.55f);
+  auto carColor = color(0.05, .05, .85);
+  auto carMat = make_shared<Lambertian>(carColor);
   Transform carT = glm::translate(glm::mat4(1), glm::vec3(0, 0, -2));
   carT = glm::scale(carT, glm::vec3(0.2f));
   auto car = make_shared<Mesh>("../dragon.obj", carMat, carT);
   world.add(car);
+
+  auto glassSphere = make_shared<Sphere>(point3(0, 0.5f, -5.5), 0.5f, make_shared<dielectric>(1.5f));
+  world.add(glassSphere);
 
   auto leftWallColor = color(.12, .45, .15);
   auto leftWallMat = make_shared<Metal>(leftWallColor, 0.05f);
@@ -744,8 +747,8 @@ void teapots()
 
   cam.aspectratio = 1.f;
   cam.image_width = 600;
-  cam.samples_per_pixel = 400;
-  cam.max_depth = 100;
+  cam.samples_per_pixel = 800;
+  cam.max_depth = 200;
   cam.background = color(0.8f, 0.8f, 0.8f);
 
   cam.fov = 45;
@@ -782,11 +785,16 @@ Transform metalTeapotT = glm::translate(glm::mat4(1), glm::vec3(-1.f, 0, -4));
   auto metalTeapot = make_shared<Mesh>("../teapot.obj", metalTeapotMat, metalTeapotT);
 
 
+  auto glassSphere = make_shared<Sphere>(point3(1, 0.3, -3), 0.3f, make_shared<dielectric>(1.5f));
+
+
+
 
 
   world.add(pinkTeapot);
   world.add (blueTeapot);
   world.add(metalTeapot);
+  world.add(glassSphere);
 
   auto wallColor = color(.8, .8, .8);
   auto wallMat = make_shared<Lambertian>(wallColor);
@@ -826,7 +834,6 @@ Transform metalTeapotT = glm::translate(glm::mat4(1), glm::vec3(-1.f, 0, -4));
 void Lucy()
 {
   camera cam;
-
   hittable_list world;
 
   cam.aspectratio = 1.f;
@@ -836,11 +843,11 @@ void Lucy()
   cam.background = color(0.0f, 0.0f, 0.0f);
 
   cam.fov = 45;
-  cam.lookfrom = point3(0, 2.f, -2);
+  cam.lookfrom = point3(0, 2.f, -1);
   cam.lookat = point3(0, 1.f, 0);
   cam.vup = glm::vec3(0, 1, 0);
 
-  cam.defocus_angle = 0;
+  cam.defocus_angle = 90.f;
 
 
   auto groundMat = make_shared<Metal>(make_shared<image_texture>("../marbletiling.jpg"), 0.3f);
@@ -874,7 +881,85 @@ void Lucy()
   std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
   runGUI(cam, frameBufferMutex);
   renderThread.join();
-
 }
 
-int main() { Lucy(); }
+void bust() {
+  hittable_list world;
+
+  camera cam;
+
+  cam.aspectratio = 1.f;
+  cam.image_width = 600;
+  cam.samples_per_pixel = 1600;
+  cam.max_depth = 400;
+  cam.background = color(0.8f, 0.8f, 0.8f);
+
+  cam.fov = 35;
+  cam.lookfrom = point3(0, -0.2, -4);
+  cam.lookat = point3(0, -0.5, 0);
+  cam.vup = glm::vec3(0, 1, 0);
+
+  cam.defocus_angle = 0;
+
+  auto groundMat = make_shared<Metal>(make_shared<checkered>(1.f, color(0.1f, 0.1f, 0.1f), color(0.9f, 0.9f, 0.9f)), 0.01f);
+  auto ground = make_shared<Sphere>(point3(0, -1000, 0), 1000, groundMat);
+ // world.add(ground);
+
+  auto carColor = color(0.05, .05, .05);
+  auto carTex = make_shared<image_texture>("../marbleTex.jpg");
+  auto carMat = make_shared<Metal>(carTex, 0.95f);
+  Transform carT = glm::translate(glm::mat4(1), glm::vec3(0, -1, -2));
+  carT = glm::rotate(carT, glm::radians(180.0f), glm::vec3(0, 1, 0));
+  carT = glm::rotate(carT, glm::radians(270.f), glm::vec3(1, 0, 0));
+  carT = glm::scale(carT, glm::vec3(0.9f));
+  auto car = make_shared<Mesh>("../bust.obj", carMat, carT);
+  world.add(car);
+
+ // auto glassSphere = make_shared<Sphere>(point3(0, 0.5f, -5.5), 0.5f, make_shared<dielectric>(1.5f));
+  //world.add(glassSphere);
+
+  auto leftWallColor = color(.12 * 15, .15 * 15, .75 * 15);
+  auto leftWallMat = make_shared<diffuseLights>(leftWallColor);
+  auto leftWall = make_shared<quadilateral>(Transform(1), point3(-5, -2, -6),
+                                            glm::vec3(0, 0, 5), glm::vec3(0, 5, 0), leftWallMat);
+  world.add(leftWall);
+
+  auto rightWallColor = color(.85 * 15, .05 * 15, .05 * 15);
+  auto rightWallMat = make_shared<Metal>(rightWallColor, 0.05f);
+  auto rightWall = make_shared<quadilateral>(Transform(1), point3(5, -2, -6),
+                                             glm::vec3(0, 0, 5), glm::vec3(0, 5, 0), rightWallMat);
+  world.add(rightWall);
+
+  auto backWallColor = color(.73, .73, .73);
+  auto backWallMat = make_shared<Metal>(backWallColor, 0.6f);
+  auto backWall = make_shared<quadilateral>(Transform(1), point3(20, -5, 20),
+                                            glm::vec3(-40, 0, 0), glm::vec3(0, 20, 0), backWallMat);
+
+  world.add (backWall);
+
+  auto ceilingColor = color(.1, .1, .1);
+  auto ceilingMat = make_shared<Metal>(ceilingColor, 0.1f);
+  auto ceiling = make_shared<quadilateral>(Transform(1), point3(2, 3, -6),
+                                           glm::vec3(-20, 0, 0), glm::vec3(0, 0, 20), ceilingMat);
+  //world.add (ceiling);
+
+  auto lightMat = make_shared<diffuseLights>(color(15, 15, 15));
+  auto light = make_shared<quadilateral>(Transform(1), point3(0.5, 4, 0),
+                                         glm::vec3(-1, 0, 0), glm::vec3(0, 0, 3), lightMat);
+  world.add(light);
+
+  auto floor = make_shared<quadilateral>(Transform(1), point3(10, -1, -6),
+                                         glm::vec3(-20, 0, 0), glm::vec3(0, 0, 20),
+                                         make_shared<Lambertian>(color(.42f, .43f, .73f)));
+
+  world.add (floor);
+
+  world = hittable_list(make_shared<bvh_node>(world));
+
+  std::mutex frameBufferMutex;
+  std::thread renderThread([&]() { cam.render(world, frameBufferMutex); });
+  runGUI(cam, frameBufferMutex);
+  renderThread.join();
+}
+
+int main() { bust(); }

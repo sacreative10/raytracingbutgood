@@ -39,7 +39,7 @@ void render(const Hittable& world, std::mutex& framebuffer_mutex)
     initCamera();
 
     // Define chunk size (e.g., 16x16 pixel chunks)
-    const int chunk_size = 8;
+    const int chunk_size = image_width / 8;
 
     fb = new Framebuffer(image_width, image_height);
 
