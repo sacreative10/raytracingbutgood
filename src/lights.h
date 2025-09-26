@@ -5,6 +5,8 @@
 #ifndef RAYTRACINGBUTGOOD_LIGHTS_H
 #define RAYTRACINGBUTGOOD_LIGHTS_H
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include "glm/gtx/norm.hpp"
 #include "material.h"
 class diffuseLights : public material {
